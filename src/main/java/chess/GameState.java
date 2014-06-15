@@ -101,4 +101,8 @@ public class GameState {
     private void placePiece(Piece piece, Position position) {
         positionToPieceMap.put(position, piece);
     }
+
+    public Map<Position, Piece> getGameState(){
+        return positionToPieceMap;
+    }
 }
