@@ -1,5 +1,4 @@
 package chess;
-
 import chess.pieces.Piece;
 
 import java.io.*;
@@ -68,7 +67,7 @@ public class CLI {
                 } else if (input.equals("list")) {
                     displayMoveList();
                 } else if (input.startsWith("move")) {
-                    writeOutput("====> Move Is Not Implemented (yet) <====");
+                    performMove(input);
                 } else {
                     writeOutput("I didn't understand that.  Type 'help' for a list of commands.");
                 }
@@ -157,6 +156,75 @@ public class CLI {
                     }
                 }
             }
+        }
+    }
+
+    private void performMove(String input){
+        if(!verifyMoveInput(input)) {
+            writeOutput("Invalid input for move command");
+            return;
+        }
+
+        input = input.replace("move", "").trim();
+
+        char colOrigin = input.charAt(0);
+        int rowOrigin = this.tryParseInt(input.substring(1, 2));
+        Position origin = new Position(colOrigin, rowOrigin);
+
+        input = input.substring(2).trim();
+
+        char colDest = input.charAt(0);
+        int rowDest = this.tryParseInt(input.substring(1, 2));
+        Position destination = new Position(colDest, rowDest);
+
+        Move move = new Move(origin, destination);
+        if (!move.VerifyOrigin(gameState.getGameState(), gameState.getCurrentPlayer())) {
+            writeOutput("invalid origin for move command");
+            return;
+        }
+
+        if (!move.VerifyDestination(gameState.getGameState(), gameState.getCurrentPlayer())) {
+            writeOutput("invalid destination for move command");
+            return;
+        }
+
+        gameState.movePiece(move);
+    }
+
+    private boolean verifyMoveInput(String input) {
+        if (input.startsWith("move")) ;
+        input = input.replace("move", "").trim();
+
+        if(input.length() > 1) {
+            int colOrigin = (int) input.charAt(0);
+            if (colOrigin > 104 || colOrigin < 97) return false;
+
+            int rowOrigin = this.tryParseInt(input.substring(1, 2));
+            if (rowOrigin > 8 || rowOrigin < 1) return false;
+        }
+
+        input = input.substring(2).trim();
+        if(input.length() > 1) {
+            int colDest = (int) input.charAt(0);
+            if (colDest > 104 || colDest < 97) return false;
+
+            int rowDest = this.tryParseInt(input.substring(1, 2));
+            if (rowDest > 8 || rowDest < 1) return false;
+        }
+        else
+            return false;
+
+        return true;
+    }
+
+    int tryParseInt(String value){
+        try
+        {
+           int result = Integer.parseInt(value);
+           return result;
+        } catch(NumberFormatException nfe)
+        {
+            return -1;
         }
     }
 
