@@ -102,24 +102,6 @@ public class GameState {
         positionToPieceMap.put(position, piece);
     }
 
-    private void removePiece(Position position){positionToPieceMap.remove(position);}
-
-    public void movePiece(Move move){
-        Piece piece = getPieceAt(move.origin);
-        placePiece(piece, move.destination);
-        removePiece(move.origin);
-        togglePlayer();
-    }
-
-    private void togglePlayer(){
-        if(currentPlayer == Player.Black)
-            currentPlayer = Player.White;
-        else
-            currentPlayer = Player.Black;
-    }
-
-
-
     public Map<Position, Piece> getGameState(){
         return positionToPieceMap;
     }
