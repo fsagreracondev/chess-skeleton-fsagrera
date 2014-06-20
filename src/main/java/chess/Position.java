@@ -65,4 +65,17 @@ public class Position {
         return "" + column + row;
     }
 
+    public boolean isBlack(){
+        if(row % 2 == 0){
+             if(((int)column) % 2 == 0)
+                 return true;
+            return false;
+        }
+        else {
+            if(((int)column) % 2 == 0)
+                return false;
+            return true;
+        }
+    }
+
 }

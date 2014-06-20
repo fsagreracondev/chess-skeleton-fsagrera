@@ -69,6 +69,14 @@ public class CLI {
                     displayMoveList();
                 } else if (input.startsWith("move")) {
                     performMove(input);
+                    if(isInDraw()) {
+                         writeOutput("DRAW");
+                         doNewGame();
+                         return;
+                    }
+                    if(isInCheckmate()) {
+                        doNewGame();
+                    }
                 } else {
                     writeOutput("I didn't understand that.  Type 'help' for a list of commands.");
                 }
@@ -218,7 +226,7 @@ public class CLI {
         return true;
     }
 
-    int tryParseInt(String value){
+    private int tryParseInt(String value){
         try
         {
             int result = Integer.parseInt(value);
@@ -227,6 +235,168 @@ public class CLI {
         {
             return -1;
         }
+    }
+
+    private boolean isInCheckmate(){
+        Player currentPlayer = gameState.getCurrentPlayer();
+        Player attackingPlayer = Player.Black;
+
+        if(currentPlayer == Player.Black)
+            attackingPlayer = Player.White;
+
+        List<Position> attackerPositions = getPositions(attackingPlayer);
+        List<Position> kingPositions = getKingPositions(currentPlayer);
+        List<Position> matchedPositions = new LinkedList<Position>();
+
+        for (Position kp : kingPositions) {
+            for (Position ap : attackerPositions) {
+                if (kp.getColumn() == ap.getColumn() && kp.getRow() == ap.getRow()) {
+                    matchedPositions.add(ap);
+                    break;
+                }
+            }
+        }
+
+        //not in danger
+        if(matchedPositions.size() == 0) return false;
+
+        //if all king positions can be matched by the opponent
+        if(matchedPositions.size() == kingPositions.size()) {
+            writeOutput("Checkmate - " +attackingPlayer + " WINS!");
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean isInDraw(){
+        //if checkmate is not possible
+        Map<Position, Piece> blackMap = new HashMap<Position, Piece>();
+        Map<Position, Piece> whiteMap = new HashMap<Position, Piece>();
+        Map<Position, Piece> map = gameState.getGameState();
+
+        Iterator it = map.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pairs = (Map.Entry)it.next();
+            Piece piece = (Piece)pairs.getValue();
+            Position pos = (Position)pairs.getKey();
+
+            if(piece.getOwner() == Player.Black)
+               blackMap.put(pos, piece);
+            else
+               whiteMap.put(pos, piece);
+        }
+
+        //both are king
+        if(blackMap.size() == 1 && whiteMap.size()== 1) return true;
+
+        //if the combinations yield draws
+        if(!validPairs(blackMap, whiteMap)) return true;
+        if(!validPairs(whiteMap, blackMap)) return true;
+
+        return false;
+    }
+
+    private boolean validPairs(Map<Position, Piece> pair1,  Map<Position, Piece> pair2){
+        if(pair1.size() != 2) return true;
+        if(pair2.size() > 2) return true;
+
+        Iterator itPair1 = pair1.entrySet().iterator();
+        while (itPair1.hasNext()) {
+            Map.Entry pairs = (Map.Entry) itPair1.next();
+            Piece piece = (Piece) pairs.getValue();
+            Position pos = (Position) pairs.getKey();
+
+            if(piece.getIdentifier() == 'b' ||  piece.getIdentifier() == 'n') {
+                if (pair2.size() == 1) return false;
+                if (piece.getIdentifier() == 'n') return true;
+                else{
+                    Iterator itPair2 = pair2.entrySet().iterator();
+                    while (itPair2.hasNext()) {
+                        Map.Entry pairs2 = (Map.Entry) itPair2.next();
+                        Piece piece2 = (Piece) pairs2.getValue();
+                        Position pos2 = (Position) pairs2.getKey();
+                        if(piece2.getIdentifier() != 'b') return true;
+
+                        //check if bishops are both the same color
+                        if(pos.isBlack() && pos2.isBlack()) return false;
+                        if(!pos.isBlack() && !pos2.isBlack()) return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private List<Position> getPositions(Player player){
+        List<Position> positions = new LinkedList<Position>();
+        Map<Position, Piece> map = gameState.getGameState();
+        Iterator it = map.entrySet().iterator();
+
+        while (it.hasNext()) {
+            Map.Entry pairs = (Map.Entry)it.next();
+            Piece piece = (Piece)pairs.getValue();
+            Position pos = (Position)pairs.getKey();
+
+            if(piece.getOwner() == player) {
+                List<Position> piecePositions = piece.getPossiblePositions(pos, map, player);
+                for (Position p : piecePositions){
+                    positions.add(p);
+                }
+            }
+        }
+
+        return positions;
+    }
+
+    private List<Position> getKingPositions(Player player){
+        List<Position> positions = new LinkedList<Position>();
+        Map<Position, Piece> map = gameState.getGameState();
+        Iterator it = map.entrySet().iterator();
+
+        while (it.hasNext()) {
+            Map.Entry pairs = (Map.Entry)it.next();
+            Piece piece = (Piece)pairs.getValue();
+            if(piece.getIdentifier() != 'k') continue;
+
+            Position pos = (Position)pairs.getKey();
+
+            if(piece.getOwner() == player) {
+                List<Position> piecePositions = piece.getPossiblePositions(pos, map, player);
+                for (Position p : piecePositions){
+                    positions.add(p);
+                }
+
+                //add current position because king doesn't have to move if not in danger
+                positions.add(pos);
+            }
+        }
+
+        return positions;
+    }
+
+    private List<Position> getDefensivePositions(Player player){
+        List<Position> positions = new LinkedList<Position>();
+        Map<Position, Piece> map = gameState.getGameState();
+        Iterator it = map.entrySet().iterator();
+
+        while (it.hasNext()) {
+            Map.Entry pairs = (Map.Entry)it.next();
+            Piece piece = (Piece)pairs.getValue();
+            if(piece.getIdentifier() == 'k') continue;
+
+            Position pos = (Position)pairs.getKey();
+
+            if(piece.getOwner() == player) {
+                List<Position> piecePositions = piece.getPossiblePositions(pos, map, player);
+                for (Position p : piecePositions){
+                    positions.add(p);
+                }
+            }
+        }
+
+        return positions;
     }
 
     public static void main(String[] args) {
